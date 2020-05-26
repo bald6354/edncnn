@@ -1,7 +1,5 @@
 # edncnn
-Source code for EDnCNN paper from CVPR 2020
-
-**cite** contains a MATLAB implementation for our [paper](https://arxiv.org/abs/2003.08282).  If you find this code useful in your research, please consider citing:
+Contains a MATLAB implementation for our [paper](https://arxiv.org/abs/2003.08282).  If you find this code useful in your research, please consider citing:
 
     @article{baldwin2020event,
       title={Event Probability Mask (EPM) and Event Denoising Convolutional NeuralNetwork (EDnCNN) for Neuromorphic Cameras},
@@ -10,7 +8,10 @@ Source code for EDnCNN paper from CVPR 2020
       year={2020}
     }
 
-This code was tested on an Ubuntu 18.04 system using MATLAB 2019B.
+This code was tested on an Ubuntu 18.04 system (i7-8700 CPU, 64GB RAM, and GeForce RTX 2080Ti GPU) running MATLAB 2019b.
+
+![Missing Image](https://github.com/bald6354/iets/blob/master/images/rotDisk_IETS.png "Denoised Dataset")
 
 ## Reading AEDAT4 data into MATLAB (optional)
 To read AEDAT4 (DV) data into MATLAB use: [aedat4tomat](https://github.com/bald6354/aedat4tomat).
+
