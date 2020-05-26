@@ -10,7 +10,7 @@ Contains a MATLAB implementation for our [paper](https://arxiv.org/abs/2003.0828
 
 This code was tested on an Ubuntu 18.04 system (i7-8700 CPU, 64GB RAM, and GeForce RTX 2080Ti GPU) running MATLAB 2019b.
 
-![Missing Image](https://github.com/bald6354/iets/blob/master/images/rotDisk_IETS.png "Denoised Dataset")
+![Missing Image](https://github.com/bald6354/edncnn/blob/master/pics/1156-teaser.gif "Denoised Dataset")
 
 ## Reading AEDAT4 data into MATLAB (optional)
 To read AEDAT4 (DV) data into MATLAB use: [aedat4tomat](https://github.com/bald6354/aedat4tomat).
