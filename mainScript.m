@@ -163,7 +163,11 @@ end
 
 %% Write out features for EDnCNN network training/testing
 
-% writeOutData(outDir)
+%Create features with labels from each dataset
+writeOutData(outDir)
+
+%Combine data from each dataset into one train/test dataset
+buildTrainTestData(outDir)
 
 
 %% Train/test EDnCNN network
