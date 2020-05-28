@@ -28,7 +28,7 @@ clear, clc, close all
 set(0,'DefaultFigureWindowStyle','docked')
 
 % Path to data files in MAT format (put files you wish to process here)
-mainDir = '/media/wescomp/WesDataDrive/2s_mat/'
+mainDir = '/media/wescomp/WesDataDrive/2_mat/'
 
 % Path to output directory (results go here)
 outDir = '/media/wescomp/WesDataDrive/edncnn_output/'

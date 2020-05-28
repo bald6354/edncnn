@@ -3,6 +3,8 @@ function buildTrainTestData(outDir)
 %Combine all features for training/testing
 files = dir([outDir '*_labels.mat']);
 
+setLabel = [];
+
 for loop = 1:numel(files)
     
     clc, loop
@@ -28,4 +30,4 @@ Y = Y_all;
 %DVSNOISE20 has 3 datasets per scene (group)
 grpLabel = floor((setLabel-1)/3) + 1;
 
-save([outDir 'all_labels.mat'],'X','Y','setLabel','grpLabel','-append')
+save([outDir 'all_labels.mat'],'X','Y','setLabel','grpLabel')
