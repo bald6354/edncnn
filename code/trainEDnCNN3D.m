@@ -1,4 +1,4 @@
-function results = trainEDnCNN(outDir)
+function results = trainEDnCNN3D(outDir)
 
 load([outDir 'all_labels.mat'],'X','Y','setLabel','grpLabel')
 
@@ -24,42 +24,39 @@ for grpID = 1:max(grpLabel)
         'RandXReflection',true, ...
         'RandYReflection',true);
     
-    %Feature dimensions
-    imageSize = [size(XTrain,1) size(XTrain,2) size(XTrain,3)];
-    
-    %Binary Classification
-    auimds = augmentedImageDatastore(imageSize,XTrain,categorical(YTrain),'DataAugmentation',augmenter);
-    
-    %Define architecture
+    imageSize = [size(XTrain,1) size(XTrain,2) size(XTrain,3)]
     layers = [
-        imageInputLayer(imageSize, 'Normalization', 'zscore') %added normalization on 2/18/2020)
-        
-        convolution2dLayer(3,16,'Padding','same')
-        batchNormalizationLayer
+        image3dInputLayer(imageSize, 'Normalization', 'zscore', 'NormalizationDimension', 'all') %added normalization on 2/18/2020)
+        %         convolution3dLayer([3 3 7], 8,'Padding',[0 0 0 ;0 0 0])
+        convolution3dLayer([3 3 7], 8,'Padding','same')
+        %         batchNormalizationLayer
         reluLayer
-        
-        maxPooling2dLayer(2,'Stride',2)
-        
-        convolution2dLayer(3,32,'Padding','same')
-        batchNormalizationLayer
+        %         convolution3dLayer([3 3 5], 16,'Padding',[0 0 0 ;0 0 0])
+        convolution3dLayer([3 3 5], 16,'Padding','same')
+        %         batchNormalizationLayer
         reluLayer
-        
-        maxPooling2dLayer(2,'Stride',2)
-        
-        convolution2dLayer(3,64,'Padding','same')
-        batchNormalizationLayer
+        %         convolution3dLayer([3 3 3], 32,'Padding',[0 0 0 ;0 0 0])
+        convolution3dLayer([3 3 3], 32,'Padding','same')
+        %         batchNormalizationLayer
         reluLayer
-        
-        dropoutLayer(0.5)
-        
+        reshapeLayer('rs',[imageSize(1) imageSize(2) imageSize(3) 32],[imageSize(1) imageSize(2) 1 imageSize(3)*32])
+        %         convolution3dLayer([3 3 1], 64,'Padding',[0 0 0 ;0 0 0])
+        convolution3dLayer([3 3 1], 64,'Padding','same')
+        %         batchNormalizationLayer
+        reluLayer
         fullyConnectedLayer(256)
+        dropoutLayer(.4) %was.4
+        fullyConnectedLayer(128)
+        dropoutLayer(.4) %was.4
         fullyConnectedLayer(2)
         softmaxLayer
         classificationLayer];
     
+    %reshape for 3d conv
+    XTrain = reshape(XTrain,size(XTrain,1), size(XTrain,2), size(XTrain,3),1,[]);
+    XTest = reshape(XTest,size(XTrain,1), size(XTrain,2), size(XTrain,3),1,[]);
     
-    %% Train Network
-    miniBatchSize  = 2048;
+    miniBatchSize  = 2^8;
     validationFrequency = floor(numel(YTrain)/miniBatchSize);
     options = trainingOptions('adam', ...
         'MiniBatchSize',miniBatchSize, ...
@@ -68,24 +65,30 @@ for grpID = 1:max(grpLabel)
         'LearnRateSchedule','piecewise', ...
         'LearnRateDropFactor',0.1, ...
         'LearnRateDropPeriod',3, ...
-        'ValidationData',{XTest,categorical(YTest)}, ...
         'ValidationFrequency',validationFrequency, ...
+        'ValidationData',{XTest,categorical(YTest')}, ...
         'ValidationPatience',7, ...
         'Shuffle','every-epoch', ...
         'Plots','training-progress', ...
         'CheckpointPath','/media/wescomp/WesDataDrive/savedNetworks',...
         'Verbose',true);
+    %         'ValidationData',{XTest,YTest'}, ...
+    % 'ValidationPatience',5, ...
     
-    [net,info] = trainNetwork(auimds,layers,options);
+    %         net = trainNetwork(XTrain,categorical(YTrain),layers,options);
+    %         net = trainNetwork(auimds,layers,options);
+    [net,info] = trainNetwork(XTrain, categorical(YTrain'), layers, options);
     
     [results.bestAccuracy(grpID), results.bestAccuracyIdx(grpID)] = max(info.ValidationAccuracy);
     results.numEpochs(grpID) = sum(~isnan(info.ValidationAccuracy)) - 1;
-
+            
+            
     %% Test Network
     %Binary Classification
     YPredicted = classify(net,XTest);
     %         accuracy = sum(YPredicted == categorical(YTest>0.5))/numel(YTest)
     accuracy = sum(YPredicted == categorical(YTest))/numel(YTest)
+%     plotconfusion(categorical(YTest),YPredicted)
    
     
     %% Save out trained network

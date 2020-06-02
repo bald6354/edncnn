@@ -69,12 +69,19 @@ for fLoop = 1:numel(files)
     % Process event points into feature vectors
     % [X, Y] = events2Feat(aedat, inputVar);
     %     [X, Y, samples] = events2FeatAll(aedat, inputVar);
+    
+    inputVar.maxNumSamples = 10000;
+    inputVar.neighborhood = 2;
+    inputVar.depth = 9;
+    
     [X, Y, samples, ~] = events2FeatML(aedat, inputVar); %edited 13FEB2020
 
 %     [X, Y, samples, pol] = events2FeatExp(aedat, inputVar);
 %     tic;
 % %     [X, Y, samples] = events2FeatExpSurfChipFast(aedat, inputVar);%added 3/12/2020
-%     [Xexp, Xhist, Y, samples] = events2Feat2SurfChipFast(aedat, inputVar);%added 4/1/2020
+%     profile on;
+%     [X, Y, samples] = events2FeatML_Fastv2(aedat, inputVar);%added 4/1/2020
+%     profile viewer
 %     toc
     
     save([outDir fn '_labels.mat'],'X','Y','samples','-v7.3')

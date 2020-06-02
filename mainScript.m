@@ -36,7 +36,7 @@ outDir = '/media/wescomp/WesDataDrive/edncnn_output/'
 % Settings
 inputVar.depth = 2; %feature depth per polarity (k in paper)
 inputVar.neighborhood = 12; %feature neighborhood (m in paper)(0=1x1, 1=3x3, 2=5x5, etc.)
-inputVar.maxNumSamples = 100e3; %Only sample up to this many events per file for pos and neg polarities combined
+inputVar.maxNumSamples = 10e3; %Only sample up to this many events per file for pos and neg polarities combined
 inputVar.waitBuffer = 2; %time in seconds to wait before sampling an event - early events have no history & dvs tends to drop the feed briefly in the first second or so
 inputVar.minTime = 150; %any amount less than 150 microseconds can be ignored (helps with log scaling)
 inputVar.maxTime = 5e6; %any amount greater than 5 seconds can be ignored (put data on fixed output size)
@@ -172,5 +172,7 @@ buildTrainTestData(outDir)
 
 %% Train/test EDnCNN network
 
+results = trainEDnCNN(outDir)
 
+results = trainEDnCNN3D(outDir)
 
