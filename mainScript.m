@@ -172,7 +172,96 @@ buildTrainTestData(outDir)
 
 %% Train/test EDnCNN network
 
-results = trainEDnCNN(outDir)
+results = trainEDnCNN(outDir); %original CNN
+% results = trainEDnCNN3D(outDir); %updated CNN
 
-results = trainEDnCNN3D(outDir)
+
+%% Use network to label data
+
+% Gather a list of files 
+files = dir([outDir '*epm.mat']);
+
+for fLoop = 1:numel(files)
+    
+    %DVSNOISE20 has 3 datasets per scene (group)
+    grpLabel = floor((fLoop-1)/3) + 1;
+
+    file = [outDir files(fLoop).name]
+    [fp,fn,fe] = fileparts(file);
+    
+    load(file, 'aedat', 'inputVar')
+    load([outDir num2str(grpLabel) '_trained_v1.mat'], 'net')
+    
+    YPred = makeLabeledAnimations(aedat, inputVar, net);
+
+    save([outDir fn '_pred.mat'],'YPred','-v7.3')
+    
+end
+
+%% Score results
+
+files = dir([outDir '*epm.mat']);
+
+for fLoop = 1:numel(files)
+    
+%     testSet = (grpID-1).*3 + 2;
+    
+%     %Load a CNN and results
+%     load([outDir num2str(grpID) '_' vString '.mat'])
+%     
+%     %where are the .mat files
+%     labeledMatFileForTestData = [dataDir files(testSet).name(1:end-11) '.mat']
+%     
+%     load(labeledMatFileForTestData, 'aedat');
+%     load(labeledMatFileForTestData, 'inputVar');
+    
+    file = [outDir files(fLoop).name]
+    [fp,fn,fe] = fileparts(file);
+    
+    load(file, 'aedat', 'inputVar')
+    load([outDir fn '_pred.mat'],'YPred')
+    
+    YPred = YPred(:,1);
+    
+    %Only score events where EPM can generate valid data
+    validEventsWithinFrameIdx = ~isnan(YPred) & (aedat.data.polarity.duringAPS>0) & aedat.data.polarity.apsIntGood;
+    
+    %YPred==2 good event from edncnn
+    
+    %Filtered surface of active events
+%     k = 50000; %50msec in paper
+    %Since only part of each files is evaluated just process that data
+    a = find(~isnan(YPred),1,'first');
+    b = find(~isnan(YPred),1,'last');
+    
+    st = aedat.data.polarity.timeStamp(a);
+    et = aedat.data.polarity.timeStamp(b);
+    frmsWithScores = find(aedat.data.frame.frameStart>st & aedat.data.frame.frameEnd<et);
+    midFrame = round(median(frmsWithScores));
+    eventTimeToFrame = abs(aedat.data.polarity.timeStamp - aedat.data.frame.timeStamp(midFrame));
+    
+    rpsData = [aedat.data.polarity.x(validEventsWithinFrameIdx) aedat.data.polarity.y(validEventsWithinFrameIdx) aedat.data.polarity.polarity(validEventsWithinFrameIdx) aedat.data.polarity.duringAPS(validEventsWithinFrameIdx) YPred(validEventsWithinFrameIdx)];
+    [rpsData,sIndex] = sortrows(rpsData,5,'descend');
+    [~,ia,~] = unique(rpsData(:,1:4),'first','rows');
+    onePerLocation = find(validEventsWithinFrameIdx);
+    onePerLocation = onePerLocation(sIndex(ia));
+    validEventsWithinFrameIdxOnlyOne.edn = false(size(validEventsWithinFrameIdx));
+    validEventsWithinFrameIdxOnlyOne.edn(onePerLocation) = true;
+    
+    %         ind = sub2ind(size(aedat.data.frame.apsIntGood),rpsData(:,2),rpsData(:,1),rpsData(:,3));
+    %         wes = accumarray(ind,double(rpsData(:,4)), [], @min, 0, true);
+    
+    N = numel(onePerLocation);
+    cnt(grpID) = N;
+    logOptimalScore(fLoop) = 1/N.*(sum(log(aedat.data.polarity.Prob(validEventsWithinFrameIdxOnlyOne.edn & aedat.data.polarity.Prob>0.5))) + ...
+        sum(log(1-aedat.data.polarity.Prob(validEventsWithinFrameIdxOnlyOne.edn & aedat.data.polarity.Prob<=0.5))));
+    
+    logAllScore(fLoop) = 1/N.*sum(log(max(1-aedat.data.polarity.Prob(validEventsWithinFrameIdxOnlyOne.edn),realmin)));
+    disp(['ALL: ' num2str(logAllScore(fLoop)-logOptimalScore(fLoop))])
+    
+    logEDNScore(fLoop) = 1/N.*(sum(log(max(aedat.data.polarity.Prob(validEventsWithinFrameIdxOnlyOne.edn & (YPred<=0.5)),realmin))) + ...
+        sum(log(max(1-aedat.data.polarity.Prob(validEventsWithinFrameIdxOnlyOne.edn & (YPred>0.5)),realmin))));
+    disp(['EDn: ' num2str(logEDNScore(fLoop)-logOptimalScore(fLoop))])
+        
+end
 
