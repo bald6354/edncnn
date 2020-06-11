@@ -1,4 +1,4 @@
-function [X, Y, normU, normV] = loadDistortion()
+function [X, Y, normU, normV, dx_du, dx_dv, dy_du, dy_dv] = loadDistortion()
 
 load('camera/cameraParameters_346.mat')
 
@@ -21,3 +21,5 @@ end
 %Normalized image coordinates are calculated from pixel coordinates by translating to the optical center and dividing by the focal length in pixels. Thus, x and y are dimensionless.
 normU = (U - cameraParams.PrincipalPoint(1)) ./ cameraParams.FocalLength(1);
 normV = (V - cameraParams.PrincipalPoint(2)) ./ cameraParams.FocalLength(2);
+
+load('camera/jacobian_346.mat','dx_du','dx_dv','dy_du','dy_dv')

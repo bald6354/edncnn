@@ -6,16 +6,13 @@ if ~isfield(inputVar,'intensityOffset')
 end
 
 % Camera Params
-[~, ~, normU, normV] = loadDistortion();
-
+[~, ~, normU, normV, dx_du, dx_dv, dy_du, dy_dv] = loadDistortion();
 numRows = double(aedat.data.frame.size(1));
 numCols = double(aedat.data.frame.size(2));
 
-%Put this inside the load_distortion function later
-load('camera/jacobian_346.mat','dx_du','dx_dv','dy_du','dy_dv')
-
 Jt = zeros(numRows, numCols, aedat.data.frame.numDiffImages);
 
+%For each APS image
 for fLoop = 1:aedat.data.frame.numDiffImages
     
     [Vx, Vy] = deal(zeros(numRows, numCols));
@@ -47,6 +44,7 @@ for fLoop = 1:aedat.data.frame.numDiffImages
         im = im.*inputVar.fpn.slope;
     end
     
+    %Calculate the spatial derivative
     %Since we have direction, we can use a more accurate estimate.
     [Gx1, Gy1] = imgradientxy(rot90(im,2),'intermediate');
     Gx1 = -1.*rot90(Gx1,2);
@@ -59,6 +57,7 @@ for fLoop = 1:aedat.data.frame.numDiffImages
     Gx = Gx.*max(1,abs(Vx.*aedat.cameraSetup.estIntegrationTime));
     Gy = Gy.*max(1,abs(Vy.*aedat.cameraSetup.estIntegrationTime));
 
+    %Linear to log domain
     Jx = Gx./(max(im+inputVar.intensityOffset,1));   %Divide by zero (can we add one to im???)
     Jy = Gy./(max(im+inputVar.intensityOffset,1)); %This is that thing i cant remember
     

@@ -2,13 +2,13 @@ function makeAnimatedGifMaxLike(aedat, outDir)
 
 h = figure;
 axis tight manual % this ensures that getframe() returns a consistent size
-[fp,fn,fe] = fileparts(aedat.importParams.filePath)
+[~,fn,~] = fileparts(aedat.importParams.filePath)
 filename = [outDir filesep fn '_maxLikeLabelsColor.gif'];
 load('cm.mat')
 cm = cm256;
 
-posProb = max(aedat.data.frame.Jt,0)./aedat.cameraSetup.estGammaP;
-negProb = max(-1.*aedat.data.frame.Jt,0)./aedat.cameraSetup.estGammaN;
+% posProb = max(aedat.data.frame.Jt,0)./aedat.cameraSetup.estGammaP;
+% negProb = max(-1.*aedat.data.frame.Jt,0)./aedat.cameraSetup.estGammaN;
 
 for loop = 1:(aedat.data.frame.numDiffImages)
     clf

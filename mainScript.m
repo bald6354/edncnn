@@ -1,7 +1,7 @@
 % Script to denoise data from event camera using CNN
 % R. Wes Baldwin
 % University of Dayton
-% August 2019
+% June 2020
 
 % Please cite the CVPR 2020 paper: 
 %  "Event Probability Mask (EPM) and Event Denoising Convolutional 
@@ -23,6 +23,10 @@
 % DVSNOISE20 dataset. You can generate your own distortion correction for a
 % different camera using the built-in MATLAB calibration application.
 
+% This code is not optimized for speed (i.e. loading and saving data to
+% disk), but rather designed to isolate functions and make the code easier
+% to follow or partially reuse
+
 %% Setup and Variables
 clear, clc, close all
 set(0,'DefaultFigureWindowStyle','docked')
@@ -38,12 +42,11 @@ inputVar.depth = 2; %feature depth per polarity (k in paper)
 inputVar.neighborhood = 12; %feature neighborhood (m in paper)(0=1x1, 1=3x3, 2=5x5, etc.)
 inputVar.maxNumSamples = 10e3; %Only sample up to this many events per file for pos and neg polarities combined
 inputVar.waitBuffer = 2; %time in seconds to wait before sampling an event - early events have no history & dvs tends to drop the feed briefly in the first second or so
-inputVar.minTime = 150; %any amount less than 150 microseconds can be ignored (helps with log scaling)
-inputVar.maxTime = 5e6; %any amount greater than 5 seconds can be ignored (put data on fixed output size)
-inputVar.maxProb = 1; %"probability" score capped at this num
-inputVar.nonCausal = false; %if true, double feature size by creating surface both back in time AND forward in time
-inputVar.removeGyroBias = 0.5; %use the first 0.5 seconds of data to remove a bias in the gyro
-inputVar.numValidSamples = 2e5; %How many samples to randomly grab from test dataset for validation
+inputVar.minTime = 150; %any amount less than 150 microseconds can be ignored (helps with log scaling) (feature normalization)
+inputVar.maxTime = 5e6; %any amount greater than 5 seconds can be ignored (put data on fixed output size) (feature normalization)
+inputVar.maxProb = 1; %"probability" score capped at this number
+inputVar.nonCausal = false; %if true, double feature size by creating surface both back in time AND forward in time (not used in paper)
+inputVar.removeGyroBias = 0.5; %use the first 0.5 seconds of data to zero the gyro
 inputVar.writeOutGIF = false; %write out an animated gif of the EPM labels assigned to the events
 
 % Camera/Lens details - DAVIS346
@@ -58,7 +61,7 @@ clear fpn
 addpath('code')
 
     
-%% Process each file
+%% Process each file and calculate EPM
 
 % Gather a list of files and 
 files = dir([mainDir '*.mat']);
@@ -87,7 +90,7 @@ for fLoop = 1:numel(files)
     apsIdx = sub2ind(size(aps),aedat.data.polarity.y,aedat.data.polarity.x,aedat.data.polarity.closestFrame);
     aedat.data.polarity.apsIntensity = aps(apsIdx);
 
-    %Is the APS data near zero or saturation (APS near extremes is not good for training)
+    %Is the APS data near zero or saturation (APS near extremes is not good for training since DVS sensor has a wider dynamic range)
     minAps = 5;
     maxAps = 250;
     apsIntGood = (aps>=minAps) & (aps<=maxAps);
@@ -102,7 +105,8 @@ for fLoop = 1:numel(files)
     %Set tau to integration time
     inputVar.tau = aedat.cameraSetup.estIntegrationTime;
     
-    %Find pixels with pos/neg DVS events during APS frame
+    %Find pixels with pos/neg DVS events during APS frame and build masks
+    %for each
     [eP, eN, eEmpty] = deal(zeros(aedat.data.frame.sizeCube));
     
     for loop = 1:aedat.data.frame.numDiffImages
@@ -138,7 +142,7 @@ for fLoop = 1:numel(files)
     aedat.cameraSetup.estGammaP = b_min(2);
     aedat.cameraSetup.estGammaN = b_min(3);
     
-    % Using APS/IMU calculate a temporal change for each frame/event
+    % Using APS/IMU calculate a temporal derivative for each frame/event
     aedat = assignJt2Events(aedat, inputVar);
 
     % Assign probability to each event based on temporal derivative and gamma (EPM)
@@ -148,7 +152,7 @@ for fLoop = 1:numel(files)
     aedat.data.polarity.Prob(dirIdx,1) = -1.*aedat.data.polarity.Jt(dirIdx)./aedat.cameraSetup.estGammaN;
 
     %Fix prob to range 0-inputVar.maxProb
-    aedat.data.polarity.Prob(aedat.data.polarity.Prob<0) = 0;
+    aedat.data.polarity.Prob(aedat.data.polarity.Prob<0) = 0; %should not happen, just in case
     aedat.data.polarity.Prob(aedat.data.polarity.Prob>inputVar.maxProb) = inputVar.maxProb;
     
     if inputVar.writeOutGIF
@@ -176,7 +180,7 @@ results = trainEDnCNN(outDir); %original CNN
 % results = trainEDnCNN3D(outDir); %updated CNN
 
 
-%% Use network to label data
+%% Use network to predict data labels (real/noise)
 
 % Gather a list of files 
 files = dir([outDir '*epm.mat']);
@@ -198,70 +202,27 @@ for fLoop = 1:numel(files)
     
 end
 
-%% Score results
+%% Score results using RPMD
 
 files = dir([outDir '*epm.mat']);
 
 for fLoop = 1:numel(files)
-    
-%     testSet = (grpID-1).*3 + 2;
-    
-%     %Load a CNN and results
-%     load([outDir num2str(grpID) '_' vString '.mat'])
-%     
-%     %where are the .mat files
-%     labeledMatFileForTestData = [dataDir files(testSet).name(1:end-11) '.mat']
-%     
-%     load(labeledMatFileForTestData, 'aedat');
-%     load(labeledMatFileForTestData, 'inputVar');
-    
+
     file = [outDir files(fLoop).name]
     [fp,fn,fe] = fileparts(file);
     
-    load(file, 'aedat', 'inputVar')
+    load(file, 'aedat')
     load([outDir fn '_pred.mat'],'YPred')
     
     YPred = YPred(:,1);
     
-    %Only score events where EPM can generate valid data
-    validEventsWithinFrameIdx = ~isnan(YPred) & (aedat.data.polarity.duringAPS>0) & aedat.data.polarity.apsIntGood;
+    [noisyScore(fLoop), denoiseScore(fLoop)] = scoreDenoise(aedat, YPred);
     
-    %YPred==2 good event from edncnn
-    
-    %Filtered surface of active events
-%     k = 50000; %50msec in paper
-    %Since only part of each files is evaluated just process that data
-    a = find(~isnan(YPred),1,'first');
-    b = find(~isnan(YPred),1,'last');
-    
-    st = aedat.data.polarity.timeStamp(a);
-    et = aedat.data.polarity.timeStamp(b);
-    frmsWithScores = find(aedat.data.frame.frameStart>st & aedat.data.frame.frameEnd<et);
-    midFrame = round(median(frmsWithScores));
-    eventTimeToFrame = abs(aedat.data.polarity.timeStamp - aedat.data.frame.timeStamp(midFrame));
-    
-    rpsData = [aedat.data.polarity.x(validEventsWithinFrameIdx) aedat.data.polarity.y(validEventsWithinFrameIdx) aedat.data.polarity.polarity(validEventsWithinFrameIdx) aedat.data.polarity.duringAPS(validEventsWithinFrameIdx) YPred(validEventsWithinFrameIdx)];
-    [rpsData,sIndex] = sortrows(rpsData,5,'descend');
-    [~,ia,~] = unique(rpsData(:,1:4),'first','rows');
-    onePerLocation = find(validEventsWithinFrameIdx);
-    onePerLocation = onePerLocation(sIndex(ia));
-    validEventsWithinFrameIdxOnlyOne.edn = false(size(validEventsWithinFrameIdx));
-    validEventsWithinFrameIdxOnlyOne.edn(onePerLocation) = true;
-    
-    %         ind = sub2ind(size(aedat.data.frame.apsIntGood),rpsData(:,2),rpsData(:,1),rpsData(:,3));
-    %         wes = accumarray(ind,double(rpsData(:,4)), [], @min, 0, true);
-    
-    N = numel(onePerLocation);
-    cnt(grpID) = N;
-    logOptimalScore(fLoop) = 1/N.*(sum(log(aedat.data.polarity.Prob(validEventsWithinFrameIdxOnlyOne.edn & aedat.data.polarity.Prob>0.5))) + ...
-        sum(log(1-aedat.data.polarity.Prob(validEventsWithinFrameIdxOnlyOne.edn & aedat.data.polarity.Prob<=0.5))));
-    
-    logAllScore(fLoop) = 1/N.*sum(log(max(1-aedat.data.polarity.Prob(validEventsWithinFrameIdxOnlyOne.edn),realmin)));
-    disp(['ALL: ' num2str(logAllScore(fLoop)-logOptimalScore(fLoop))])
-    
-    logEDNScore(fLoop) = 1/N.*(sum(log(max(aedat.data.polarity.Prob(validEventsWithinFrameIdxOnlyOne.edn & (YPred<=0.5)),realmin))) + ...
-        sum(log(max(1-aedat.data.polarity.Prob(validEventsWithinFrameIdxOnlyOne.edn & (YPred>0.5)),realmin))));
-    disp(['EDn: ' num2str(logEDNScore(fLoop)-logOptimalScore(fLoop))])
-        
 end
 
+%Average results for each scene and plot
+figure
+bar(cat(1,mean(reshape(noisyScore,3,[]),1),mean(reshape(denoiseScore,3,[]),1))')
+legend('Noisy','Denoised')
+xlabel('Scene')
+ylabel('RPMD')
