@@ -28,7 +28,8 @@
 
 % This code is not optimized for speed (i.e. loading and saving data to
 % disk), but rather designed to isolate functions and make the code easier
-% to follow or partially reuse
+% to follow or partially reuse. Please contact me at baldwinr2@udayton.edu
+% with any questions. Thanks!
 
 %% Setup and Variables
 clear, clc, close all
