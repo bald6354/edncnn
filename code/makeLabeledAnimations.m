@@ -1,17 +1,5 @@
 function YPred = makeLabeledAnimations(aedat, inputVar, net)
 
-if ~exist('inputVar','var')
-    %Settings
-    inputVar.depth = 2;
-    inputVar.neighborhood = 2; %0=1x1, 1=3x3, 2=5x5
-    inputVar.maxNumSamples = 5000;
-    %     inputVar.waitBuffer = 2; %time in seconds to wait before sampling an event - early events have no history & dvs tends to drop the feed briefly in the first second or so
-    inputVar.minTime = 150; %any amount less than 150 microseconds can be ignored (helps with log scaling)
-    inputVar.maxTime = 5e6; %any amount greater than 5 seconds can be ignored (put data on fixed output size)
-    inputVar.maxProb = 1; %any "probability" score greater than 10 will be fixed to 10
-    inputVar.nonCausal = true; %if true, double feature size by creating surface both back in time AND forward in time
-end
-
 numRows = double(aedat.data.frame.size(1));
 numCols = double(aedat.data.frame.size(2));
 

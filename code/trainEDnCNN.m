@@ -81,7 +81,6 @@ for grpID = 1:max(grpLabel)
     %% Test Network
     %Binary Classification
     YPredicted = classify(net,XTest);
-    %         accuracy = sum(YPredicted == categorical(YTest>0.5))/numel(YTest)
     accuracy = mean(YPredicted == categorical(YTest))
    
     

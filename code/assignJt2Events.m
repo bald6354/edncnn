@@ -10,11 +10,13 @@ end
 numRows = double(aedat.data.frame.size(1));
 numCols = double(aedat.data.frame.size(2));
 
+%Temporal derivative
 Jt = zeros(numRows, numCols, aedat.data.frame.numDiffImages);
 
 %For each APS image
 for fLoop = 1:aedat.data.frame.numDiffImages
     
+    %Velocity fields
     [Vx, Vy] = deal(zeros(numRows, numCols));
     
     if aedat.cameraSetup.isRollingShutter

@@ -27,22 +27,14 @@ for grpID = 1:max(grpLabel)
     imageSize = [size(XTrain,1) size(XTrain,2) size(XTrain,3)]
     layers = [
         image3dInputLayer(imageSize, 'Normalization', 'zscore', 'NormalizationDimension', 'all') %added normalization on 2/18/2020)
-        %         convolution3dLayer([3 3 7], 8,'Padding',[0 0 0 ;0 0 0])
         convolution3dLayer([3 3 7], 8,'Padding','same')
-        %         batchNormalizationLayer
         reluLayer
-        %         convolution3dLayer([3 3 5], 16,'Padding',[0 0 0 ;0 0 0])
         convolution3dLayer([3 3 5], 16,'Padding','same')
-        %         batchNormalizationLayer
         reluLayer
-        %         convolution3dLayer([3 3 3], 32,'Padding',[0 0 0 ;0 0 0])
         convolution3dLayer([3 3 3], 32,'Padding','same')
-        %         batchNormalizationLayer
         reluLayer
         reshapeLayer('rs',[imageSize(1) imageSize(2) imageSize(3) 32],[imageSize(1) imageSize(2) 1 imageSize(3)*32])
-        %         convolution3dLayer([3 3 1], 64,'Padding',[0 0 0 ;0 0 0])
         convolution3dLayer([3 3 1], 64,'Padding','same')
-        %         batchNormalizationLayer
         reluLayer
         fullyConnectedLayer(256)
         dropoutLayer(.4) %was.4
@@ -72,11 +64,7 @@ for grpID = 1:max(grpLabel)
         'Plots','training-progress', ...
         'CheckpointPath','/media/wescomp/WesDataDrive/savedNetworks',...
         'Verbose',true);
-    %         'ValidationData',{XTest,YTest'}, ...
-    % 'ValidationPatience',5, ...
-    
-    %         net = trainNetwork(XTrain,categorical(YTrain),layers,options);
-    %         net = trainNetwork(auimds,layers,options);
+
     [net,info] = trainNetwork(XTrain, categorical(YTrain'), layers, options);
     
     [results.bestAccuracy(grpID), results.bestAccuracyIdx(grpID)] = max(info.ValidationAccuracy);
@@ -86,9 +74,7 @@ for grpID = 1:max(grpLabel)
     %% Test Network
     %Binary Classification
     YPredicted = classify(net,XTest);
-    %         accuracy = sum(YPredicted == categorical(YTest>0.5))/numel(YTest)
-    accuracy = sum(YPredicted == categorical(YTest))/numel(YTest)
-%     plotconfusion(categorical(YTest),YPredicted)
+    accuracy = mean(YPredicted == categorical(YTest))
    
     
     %% Save out trained network

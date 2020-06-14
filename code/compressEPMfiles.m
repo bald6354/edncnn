@@ -1,5 +1,7 @@
 function compressEPMfiles(outDir)
 
+%Significantly reduces file size for dataset publication
+
 files =  dir([outDir '*_epm.mat']);
 
 for fLoop = 1:numel(files)

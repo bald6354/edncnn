@@ -7,6 +7,9 @@
 %  "Event Probability Mask (EPM) and Event Denoising Convolutional 
 %   Neural Network (EDnCNN) for Neuromorphic Cameras"
 
+% This code uses functions from Garrick Orchard's "Motion-Ground-Truth"
+% Available here: https://github.com/gorchard/Motion-Ground-Truth
+
 % DVSNOISE20 data can be downloaded from:
 % (https://sites.google.com/a/udayton.edu/issl/software/dataset)
 
