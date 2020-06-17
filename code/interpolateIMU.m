@@ -8,7 +8,7 @@ if ~exist('zeroBiasSec','var')
     zeroBiasSec = 0;
 end
 
-interpMethod = 'spline';
+interpMethod = 'linear';
 
 %Remove duplicates by averaging imu data if timestamps are the same
 [imu.timeStamp,~,pixIdx] = unique(imu.timeStamp,'stable');
