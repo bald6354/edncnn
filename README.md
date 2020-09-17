@@ -8,7 +8,7 @@ Contains a MATLAB implementation for our [paper](https://arxiv.org/abs/2003.0828
       year={2020}
     }
 
-This code was tested on an Ubuntu 18.04 system (i7-8700 CPU, 64GB RAM, and GeForce RTX 2080Ti GPU) running MATLAB 2019b.
+This code was tested on an Ubuntu 18.04 system (i7-8700 CPU, 64GB RAM, and GeForce RTX 2080Ti GPU) running MATLAB 2019b. Matlab's image processing and computer vision toolboxes are required.
 
 ![Missing Image](https://github.com/bald6354/edncnn/blob/master/pics/1156-teaser.gif "Denoised Dataset")
 
