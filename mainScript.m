@@ -218,7 +218,7 @@ for fLoop = 1:numel(files)
     load(file, 'aedat')
     load([outDir fn '_pred.mat'],'YPred')
     
-    YPred = YPred(:,1);
+    YPred = YPred(:,1); %please make sure you need column #1 and not column #2 (column #2 is 1-column #1)(This may change based on how matlab auto assigns output in the network classification layer.)
     
     [noisyScore(fLoop), denoiseScore(fLoop)] = scoreDenoise(aedat, YPred);
     
