@@ -25,7 +25,7 @@ logAllScore = 1/N.*sum(log(max(1-aedat.data.polarity.Prob(validEventsWithinFrame
 noisyScore = logOptimalScore - logAllScore;
 disp(['Noisy: ' num2str(noisyScore)])
 
-logDenoiseScore = 1/N.*(sum(log(max(aedat.data.polarity.Prob(validEventsWithinFrameIdxOnlyOne & (YPred<=0.5)),realmin))) + ...
-    sum(log(max(1-aedat.data.polarity.Prob(validEventsWithinFrameIdxOnlyOne & (YPred>0.5)),realmin))));
+logDenoiseScore = 1/N.*(sum(log(max(aedat.data.polarity.Prob(validEventsWithinFrameIdxOnlyOne & (YPred>0.5)),realmin))) + ...
+    sum(log(max(1-aedat.data.polarity.Prob(validEventsWithinFrameIdxOnlyOne & (YPred<=0.5)),realmin))));
 denoiseScore = logOptimalScore - logDenoiseScore;
 disp(['Denoised: ' num2str(denoiseScore)])
