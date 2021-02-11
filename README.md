@@ -13,7 +13,7 @@ This code was tested on an Ubuntu 18.04 system (i7-8700 CPU, 64GB RAM, and GeFor
 ![Missing Image](https://github.com/bald6354/edncnn/blob/master/pics/1156-teaser.gif "Denoised Dataset")
 
 ## Reading AEDAT data into MATLAB (optional)
-To read AEDAT (jAER) data into MATLAB use: [AedatTools](https://gitlab.com/inivation/AedatTools).
+To read AEDAT (jAER) data into MATLAB use: [AedatTools](https://gitlab.com/inivation/AedatTools) or [AedatTools Alt](https://github.com/simbamford/AedatTools/).
 
 ## Reading AEDAT4 data into MATLAB (optional)
 To read AEDAT4 (DV) data into MATLAB use: [aedat4tomat](https://github.com/bald6354/aedat4tomat).
