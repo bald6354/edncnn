@@ -12,6 +12,9 @@ This code was tested on an Ubuntu 18.04 system (i7-8700 CPU, 64GB RAM, and GeFor
 
 ![Missing Image](https://github.com/bald6354/edncnn/blob/master/pics/1156-teaser.gif "Denoised Dataset")
 
+## DVSNOISE20 Dataset (optional)
+To download the dataset use: [dvsnoise20](https://sites.google.com/a/udayton.edu/issl/software/dataset).
+
 ## Reading AEDAT data into MATLAB (optional)
 To read AEDAT (jAER) data into MATLAB use: [AedatTools](https://gitlab.com/inivation/AedatTools) or [AedatTools Alt](https://github.com/simbamford/AedatTools/).
 
